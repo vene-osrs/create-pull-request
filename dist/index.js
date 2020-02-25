@@ -4215,14 +4215,6 @@ const isDocker = __webpack_require__(160);
 const core = __webpack_require__(470);
 const exec = __webpack_require__(986);
 const setupPython = __webpack_require__(104);
-const {
-  getRepoPath,
-  getAndUnsetConfigOption,
-  addConfigOption
-} = __webpack_require__(718);
-
-const EXTRAHEADER_OPTION = "http.https://github.com/.extraheader";
-const EXTRAHEADER_VALUE_REGEX = "^AUTHORIZATION:";
 
 async function run() {
   try {
@@ -4299,139 +4291,14 @@ async function run() {
     if (inputs.base) process.env.CPR_BASE = inputs.base;
     if (inputs.branchSuffix) process.env.CPR_BRANCH_SUFFIX = inputs.branchSuffix;
 
-    // Get the repository path
-    var repoPath = getRepoPath(inputs.path);
-    // Get the extraheader config option if it exists
-    var extraHeaderOption = await getAndUnsetConfigOption(
-      repoPath,
-      EXTRAHEADER_OPTION,
-      EXTRAHEADER_VALUE_REGEX
-    );
-
     // Execute create pull request
     await exec.exec(python, [`${cpr}/create_pull_request.py`]);
   } catch (error) {
     core.setFailed(error.message);
-  } finally {
-    // Restore the extraheader config option
-    if (extraHeaderOption) {
-      if (
-        await addConfigOption(
-          repoPath,
-          EXTRAHEADER_OPTION,
-          extraHeaderOption.value
-        )
-      )
-        core.debug(`Restored config option '${EXTRAHEADER_OPTION}'`);
-    }
   }
 }
 
 run();
-
-
-/***/ }),
-
-/***/ 718:
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-const core = __webpack_require__(470);
-const exec = __webpack_require__(986);
-const path = __webpack_require__(622);
-
-function getRepoPath(relativePath) {
-  let githubWorkspacePath = process.env["GITHUB_WORKSPACE"];
-  if (!githubWorkspacePath) {
-    throw new Error("GITHUB_WORKSPACE not defined");
-  }
-  githubWorkspacePath = path.resolve(githubWorkspacePath);
-  core.debug(`githubWorkspacePath: ${githubWorkspacePath}`);
-
-  repoPath = githubWorkspacePath;
-  if (relativePath) repoPath = path.resolve(repoPath, relativePath);
-
-  core.debug(`repoPath: ${repoPath}`);
-  return repoPath;
-}
-
-async function execGit(repoPath, args, ignoreReturnCode = false) {
-  const stdout = [];
-  const options = {
-    cwd: repoPath,
-    ignoreReturnCode: ignoreReturnCode,
-    listeners: {
-      stdout: data => {
-        stdout.push(data.toString());
-      }
-    }
-  };
-
-  var result = {};
-  result.exitCode = await exec.exec("git", args, options);
-  result.stdout = stdout.join("");
-  return result;
-}
-
-async function addConfigOption(repoPath, name, value) {
-  const result = await execGit(
-    repoPath,
-    ["config", "--local", "--add", name, value],
-    true
-  );
-  return result.exitCode === 0;
-}
-
-async function unsetConfigOption(repoPath, name, valueRegex=".") {
-  const result = await execGit(
-    repoPath,
-    ["config", "--local", "--unset", name, valueRegex],
-    true
-  );
-  return result.exitCode === 0;
-}
-
-async function configOptionExists(repoPath, name, valueRegex=".") {
-  const result = await execGit(
-    repoPath,
-    ["config", "--local", "--name-only", "--get-regexp", name, valueRegex],
-    true
-  );
-  return result.exitCode === 0;
-}
-
-async function getConfigOption(repoPath, name, valueRegex=".") {
-  const result = await execGit(
-    repoPath,
-    ["config", "--local", "--get-regexp", name, valueRegex],
-    true
-  );
-  const option = result.stdout.trim().split(`${name} `);
-  return {
-    name: name,
-    value: option[1]
-  }
-}
-
-async function getAndUnsetConfigOption(repoPath, name, valueRegex=".") {
-  if (await configOptionExists(repoPath, name, valueRegex)) {
-    const option = await getConfigOption(repoPath, name, valueRegex);
-    if (await unsetConfigOption(repoPath, name, valueRegex)) {
-      core.debug(`Unset config option '${name}'`);
-      return option;
-    }
-  }
-  return null;
-}
-
-module.exports = {
-  getRepoPath,
-  execGit,
-  addConfigOption,
-  unsetConfigOption,
-  configOptionExists,
-  getConfigOption,
-  getAndUnsetConfigOption
-};
 
 
 /***/ }),

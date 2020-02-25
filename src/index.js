@@ -3,14 +3,6 @@ const isDocker = require("is-docker");
 const core = require("@actions/core");
 const exec = require("@actions/exec");
 const setupPython = require("./setup-python");
-const {
-  getRepoPath,
-  getAndUnsetConfigOption,
-  addConfigOption
-} = require("./git");
-
-const EXTRAHEADER_OPTION = "http.https://github.com/.extraheader";
-const EXTRAHEADER_VALUE_REGEX = "^AUTHORIZATION:";
 
 async function run() {
   try {
@@ -87,31 +79,10 @@ async function run() {
     if (inputs.base) process.env.CPR_BASE = inputs.base;
     if (inputs.branchSuffix) process.env.CPR_BRANCH_SUFFIX = inputs.branchSuffix;
 
-    // Get the repository path
-    var repoPath = getRepoPath(inputs.path);
-    // Get the extraheader config option if it exists
-    var extraHeaderOption = await getAndUnsetConfigOption(
-      repoPath,
-      EXTRAHEADER_OPTION,
-      EXTRAHEADER_VALUE_REGEX
-    );
-
     // Execute create pull request
     await exec.exec(python, [`${cpr}/create_pull_request.py`]);
   } catch (error) {
     core.setFailed(error.message);
-  } finally {
-    // Restore the extraheader config option
-    if (extraHeaderOption) {
-      if (
-        await addConfigOption(
-          repoPath,
-          EXTRAHEADER_OPTION,
-          extraHeaderOption.value
-        )
-      )
-        core.debug(`Restored config option '${EXTRAHEADER_OPTION}'`);
-    }
   }
 }
 

@@ -6,7 +6,6 @@
   "scripts": {
     "clean": "rm -rf dist",
     "lint": "eslint src/index.js",
-    "test": "eslint src/index.js && jest",
     "build": "ncc build src/index.js -o dist",
     "vendor-deps": "pip download -r src/cpr/requirements.txt --no-binary=:all: -d dist/vendor",
     "package": "npm run build && npm run vendor-deps"
@@ -30,7 +29,6 @@
   },
   "devDependencies": {
     "@zeit/ncc": "0.21.1",
-    "eslint": "6.8.0",
-    "jest": "25.1.0"
+    "eslint": "6.8.0"
   }
 }
