@@ -129,7 +129,10 @@ if protocol == "HTTPS":
     # Mask the basic credential in logs and debug output
     print(f"::add-mask::{basic_credential}")
     repo.git.set_persistent_git_options(
-        c=f"http.{repo_url}/.extraheader=AUTHORIZATION: basic {basic_credential}"
+        c=[
+            f"http.{repo_url}/.extraheader=",
+            f"http.{repo_url}/.extraheader=AUTHORIZATION: basic {basic_credential}",
+        ]
     )
 
 # Determine if the checked out ref is a valid base for a pull request
