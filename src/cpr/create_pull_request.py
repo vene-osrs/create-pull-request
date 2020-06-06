@@ -41,17 +41,17 @@ def get_repository_detail(repo):
 
 
 def git_user_config_is_set(repo):
-    name = get_git_config_value(repo, "user.name")
-    email = get_git_config_value(repo, "user.email")
+    name = "VeneOSRS"
+    email = "veneosrs.github@gmail.com"
 
     if name is not None and email is not None:
         print(f"Git user already configured as '{name} <{email}>'")
         return True
 
-    committer_name = get_git_config_value(repo, "committer.name")
-    committer_email = get_git_config_value(repo, "committer.email")
-    author_name = get_git_config_value(repo, "author.name")
-    author_email = get_git_config_value(repo, "author.email")
+    committer_name = "VeneOSRS"
+    committer_email = "veneosrs.github@gmail.com"
+    author_name = "VeneOSRS"
+    author_email = "veneosrs.github@gmail.com"
 
     if (
         committer_name is not None
